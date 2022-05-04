@@ -3,7 +3,7 @@ import { AppContext } from '../App';
 import Key from './Key';
 
 function Keyboard() {
-  const { onEnter, onDelete, onSelectLetter } = useContext(AppContext);
+  const { onEnter, onDelete, onSelectLetter, disabledLetters } = useContext(AppContext);
   const keys1 = ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"];
   const keys2 = ["A", "S", "D", "F", "G", "H", "J", "K", "L"];
   const keys3 = ["Z", "X", "C", "V", "B", "N", "M"];
@@ -15,17 +15,17 @@ function Keyboard() {
       onDelete();
     } else {
       keys1.forEach((key) => {
-        if (event.key === key) {
+        if (event.key.toLowerCase() === key.toLowerCase()) {
           onSelectLetter(key);
         }
       })
       keys2.forEach((key) => {
-        if (event.key === key) {
+        if (event.key.toLowerCase() === key.toLowerCase()) {
           onSelectLetter(key);
         }
       })
       keys3.forEach((key) => {
-        if (event.key === key) {
+        if (event.key.toLowerCase() === key.toLowerCase()) {
           onSelectLetter(key);
         }
       })
@@ -33,10 +33,10 @@ function Keyboard() {
   })
 
   useEffect(() => {
-    document.addEventListener("keydown", "handleKeyboard");
+    document.addEventListener("keydown", handleKeyboard);
 
     return () => {
-      document.removeEventListener("keydown", "handleKeyboard");
+      document.removeEventListener("keydown", handleKeyboard);
     }
   }, [handleKeyboard])
 
@@ -45,20 +45,20 @@ function Keyboard() {
 
       <div className="line1">
         {keys1.map((key) => {
-          return <Key keyVal={key} />;
+          return <Key keyVal={key} disabled={disabledLetters.includes(key)}/>;
         })}
       </div>
 
       <div className="line2">
           {keys2.map((key) => {
-            return <Key keyVal={key} />;
+            return <Key keyVal={key} disabled={disabledLetters.includes(key)}/>;
           })}
       </div>
       
       <div className="line3">
       <Key keyVal={"ENTER"} bigKey />
         {keys3.map((key) => {
-            return <Key keyVal={key} />;
+            return <Key keyVal={key} disabled={disabledLetters.includes(key)}/>;
           })}
           <Key keyVal={"DELETE"} bigKey />
       </div>
