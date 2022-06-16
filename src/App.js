@@ -1,90 +1,59 @@
+import { Container, Switch, withStyles } from '@material-ui/core';
+import { grey } from '@material-ui/core/colors';
+import axios from 'axios';
+import React, { useEffect, useState } from 'react';
 import './App.css';
-import Board from './components/Board';
-import Keyboard from './components/Keyboard';
-import { createContext, useEffect, useState } from 'react';
-import { boardDefault, generateWordSet } from './Words';
+import Definitions from './components/Definitions/Definitions';
+import Header from './components/Header/Header';
 
-export const AppContext = createContext();
 
 function App() {
-  const [board, setBoard] = useState(boardDefault);
-  const [currAttempt, setCurrAttempt] = useState({attempt: 0, letterPos:0});
-  const [wordSet, setWordSet] = useState(new Set());
-  const [disabledLetters, setDisabledLetters] = useState([]);
 
-  const correctWord = "RIGHT";
+  const [category, setCategory] = useState("en");
+  const [word, setWord] = useState("");
+  const [meanings, setMeanings] = useState([]);
+  const [LightMode , setLightMode] = useState(false);
+  const DarkMode = withStyles({
+    switchBase: {
+      color: grey[300],
+      "&$checked": {
+        backgroundColor: grey[500],
+      },
+    },
+    checked: {},
+    track: {},
+  })(Switch);
 
-  useEffect(() => {
-    generateWordSet().then((words) => {
-      setWordSet(words.wordSet)
-    })
-  }, [])
-  
-  const onSelectLetter = (keyVal) => {
-    if (currAttempt.letterPos > 4) return;
-    const newBoard = [...board]
-    newBoard[currAttempt.attempt][currAttempt.letterPos] = keyVal;
-    setBoard(newBoard);
-    setCurrAttempt({...currAttempt, letterPos: currAttempt.letterPos + 1 });
-  }
+  const dictionaryApi = async() => {
+    try {
+      const data = await axios.get(`https://api.dictionaryapi.dev/api/v2/entries/${category}/${word}`);
 
-  const onDelete = () => {
-    if (currAttempt.letterPos === 0) return;
-    const newBoard = [...board]
-    newBoard[currAttempt.attempt][currAttempt.letterPos - 1] = "";
-    setBoard(newBoard)
-    setCurrAttempt({...currAttempt, letterPos: currAttempt.letterPos - 1})
-  }
-
-  const onEnter = () => {
-    if (currAttempt.letterPos !==5) return;
-
-    let currWord = "";
-    for (let i = 0; i < 5; i++) {
-      currWord += board[currAttempt.attempt][i];
+      setMeanings(data.data);
+    } 
+        
+    catch (error) {
+      console.log(error);
     }
-
-    if (wordSet.has(currWord.toLowerCase())) {
-      setCurrAttempt({attempt: currAttempt.attempt + 1, letterPos: 0});
-    } else {
-      alert("Word Not Found");
-    }
-
-    if (currWord === correctWord) {
-      alert("Game Ended");
-    }
-
   }
+ // console.log(meanings);
+
+
+  useEffect (() => {
+    dictionaryApi();
+  }, [word, category]);
 
   return (
-    <div className="App">
-      <nav>
-        <h1>
-          Wordle
-        </h1>
-      </nav>
-      <AppContext.Provider 
-        value={{ 
-          board, 
-          setBoard, 
-          currAttempt, 
-          setCurrAttempt, 
-          onSelectLetter, 
-          onDelete, 
-          onEnter, 
-          correctWord, 
-          setDisabledLetters, 
-          disabledLetters 
-        }}
-      >
-        <div className="game">
-          <Board />
-          <Keyboard />
-        </div>  
-      </AppContext.Provider>
-
+    <div className="App" style={{height:'100vh', backgroundColor: LightMode ? 'white' : '#282c34', color: LightMode ? 'black' : 'white', transition: 'all 0.5s linear'}}>
+      <Container maxWidth="md" style={{display: 'flex', flexDirection:'column', height:'100vh', justifyContent:'space-evenly'}}>
+        <div style={{position:'absolute', top:0, right:15, paddingTop:10}}>
+          <span>{LightMode ? "Dark" : "Light"} Mode</span>
+          <DarkMode checked={LightMode} onChange={() => setLightMode(!LightMode)}/>
+        </div>
+        <Header category={category} setCategory={setCategory} word={word} setWord={setWord} LightMode={LightMode}/>
+        {meanings && (<Definitions word={word} meanings={meanings} category={category} LightMode={LightMode}/>)}
+      </Container>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
